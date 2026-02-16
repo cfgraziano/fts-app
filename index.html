@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fill Their Suitcase — Content Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ivory: #FDFAF5;
+    --charcoal: #3D3D3D;
+    --terra: #E8956D;
+    --amber: #C9A96E;
+    --forest: #2C4A3E;
+    --sand: #E8DDD0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 40px; }
+  .brand-mark {
+    display: inline-block;
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--ivory);
+    letter-spacing: 8px;
+    margin-bottom: 8px;
+  }
+  .tagline {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--terra);
+    font-weight: 300;
+  }
+  .divider {
+    width: 60px;
+    height: 2px;
+    background: var(--terra);
+    margin: 16px auto 0;
+  }
+
+  .upload-card {
+    background: var(--ivory);
+    border-radius: 4px;
+    padding: 48px 40px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  .upload-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--charcoal);
+    margin-bottom: 8px;
+  }
+
+  .upload-subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--sand);
+    border-radius: 4px;
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #faf7f2;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--terra);
+    background: #f5f0ea;
+  }
+
+  .upload-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .upload-text {
+    font-size: 15px;
+    color: var(--charcoal);
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  .upload-hint { font-size: 12px; color: #999; }
+
+  #fileInput { display: none; }
+
+  .preview-area {
+    margin-top: 24px;
+    display: none;
+    text-align: center;
+  }
+  .preview-area.active { display: block; }
+
+  .image-preview {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 4px;
+    margin: 0 auto 16px;
+    display: block;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+  }
+
+  .remove-btn {
+    display: inline-block;
+    background: none;
+    border: 1px solid var(--sand);
+    color: #999;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .remove-btn:hover {
+    border-color: var(--terra);
+    color: var(--terra);
+  }
+
+  .analyze-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--terra), #d68159);
+    color: white;
+    border: none;
+    padding: 18px 32px;
+    border-radius: 4px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 24px;
+    font-family: 'Lato', sans-serif;
+    box-shadow: 0 4px 16px rgba(232, 149, 109, 0.3);
+  }
+
+  .analyze-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(232, 149, 109, 0.4);
+  }
+
+  .analyze-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .analyze-btn.loading {
+    background: #999;
+    cursor: wait;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 8px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .error-message {
+    background: #ffe5e5;
+    border-left: 4px solid #d32f2f;
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .error-message.active { display: block; }
+
+  .error-text {
+    font-size: 13px;
+    color: #c62828;
+    line-height: 1.6;
+  }
+
+  .results-card {
+    background: var(--ivory);
+    border-radius: 4px;
+    padding: 40px;
+    display: none;
+    animation: slideUp 0.5s ease;
+  }
+
+  .results-card.active { display: block; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--sand);
+  }
+
+  .results-icon { font-size: 28px; }
+
+  .results-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--charcoal);
+  }
+
+  .section { margin-bottom: 40px; }
+  .section:last-child { margin-bottom: 0; }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+
+  .section-content {
+    background: #faf7f2;
+    padding: 24px 28px;
+    border-radius: 4px;
+    border-left: 4px solid var(--terra);
+  }
+
+  .section-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--charcoal);
+    white-space: pre-wrap;
+  }
+
+  .caption-box {
+    background: white;
+    padding: 20px 24px;
+    border-radius: 4px;
+    border: 1px solid var(--sand);
+    margin-top: 12px;
+    display: none;
+  }
+
+  .caption-box.active { display: block; }
+
+  .caption-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--charcoal);
+    font-weight: 400;
+    white-space: pre-wrap;
+  }
+
+  .copy-btn {
+    background: var(--forest);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 12px;
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    transition: all 0.2s ease;
+  }
+
+  .copy-btn:hover { background: #1f362e; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 16px; }
+    .upload-card, .results-card { padding: 32px 24px; }
+    .brand-mark { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="brand-mark">FTS</div>
+    <div class="tagline">Content Analyzer</div>
+    <div class="divider"></div>
+  </div>
+
+  <div class="upload-card">
+    <h1 class="upload-title">Analyze Your Post</h1>
+    <p class="upload-subtitle">Upload an image and get instant caption suggestions, brand voice feedback, visual analysis, and engagement tactics.</p>
+
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📸</div>
+      <div class="upload-text">Click to upload or drag and drop</div>
+      <div class="upload-hint">JPG, PNG, or HEIC · Max 10MB</div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*">
+
+    <div class="preview-area" id="previewArea">
+      <img id="imagePreview" class="image-preview" alt="Preview">
+      <button class="remove-btn" id="removeBtn">Remove Image</button>
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" disabled>Analyze Image</button>
+
+    <div class="error-message" id="errorMessage">
+      <div class="error-text" id="errorText"></div>
+    </div>
+  </div>
+
+  <div class="results-card" id="resultsCard">
+    <div class="results-header">
+      <span class="results-icon">✨</span>
+      <h2 class="results-title">Your Content Analysis</h2>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Caption Suggestions</div>
+      <div class="section-content">
+        <div class="section-text" id="captionAnalysis">Analyzing...</div>
+        <div class="caption-box" id="captionBox">
+          <div class="caption-text" id="captionText"></div>
+          <button class="copy-btn" id="copyBtn">Copy Caption</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Brand Voice Check</div>
+      <div class="section-content">
+        <div class="section-text" id="voiceAnalysis">Analyzing...</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Visual Feedback</div>
+      <div class="section-content">
+        <div class="section-text" id="visualAnalysis">Analyzing...</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Engagement Tactics</div>
+      <div class="section-content">
+        <div class="section-text" id="engagementAnalysis">Analyzing...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const previewArea = document.getElementById('previewArea');
+const imagePreview = document.getElementById('imagePreview');
+const removeBtn = document.getElementById('removeBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const resultsCard = document.getElementById('resultsCard');
+const errorMessage = document.getElementById('errorMessage');
+const errorText = document.getElementById('errorText');
+
+let selectedFile = null;
+let imageBase64 = null;
+
+uploadZone.addEventListener('click', () => fileInput.click());
+
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.style.borderColor = 'var(--terra)';
+  uploadZone.style.background = '#fff5ed';
+});
+
+uploadZone.addEventListener('dragleave', () => {
+  uploadZone.style.borderColor = 'var(--sand)';
+  uploadZone.style.background = '#faf7f2';
+});
+
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.style.borderColor = 'var(--sand)';
+  uploadZone.style.background = '#faf7f2';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    handleFile(file);
+  }
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+function handleFile(file) {
+  if (file.size > 10 * 1024 * 1024) {
+    showError('Image is too large. Please upload an image under 10MB.');
+    return;
+  }
+  
+  selectedFile = file;
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    imagePreview.src = e.target.result;
+    imageBase64 = e.target.result.split(',')[1];
+    previewArea.classList.add('active');
+    analyzeBtn.disabled = false;
+    errorMessage.classList.remove('active');
+    resultsCard.classList.remove('active');
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+removeBtn.addEventListener('click', () => {
+  selectedFile = null;
+  imageBase64 = null;
+  fileInput.value = '';
+  previewArea.classList.remove('active');
+  analyzeBtn.disabled = true;
+  resultsCard.classList.remove('active');
+});
+
+analyzeBtn.addEventListener('click', analyzeImage);
+
+async function analyzeImage() {
+  if (!imageBase64) return;
+
+  analyzeBtn.classList.add('loading');
+  analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+  analyzeBtn.disabled = true;
+  errorMessage.classList.remove('active');
+  resultsCard.classList.remove('active');
+
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: imageBase64 })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    document.getElementById('captionAnalysis').textContent = data.captions || 'No caption suggestions found.';
+    document.getElementById('voiceAnalysis').textContent = data.voice || 'No voice analysis found.';
+    document.getElementById('visualAnalysis').textContent = data.visual || 'No visual feedback found.';
+    document.getElementById('engagementAnalysis').textContent = data.engagement || 'No engagement tactics found.';
+
+    if (data.firstCaption) {
+      document.getElementById('captionText').textContent = data.firstCaption;
+      document.getElementById('captionBox').classList.add('active');
+    }
+
+    resultsCard.classList.add('active');
+    
+    setTimeout(() => {
+      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+  } catch (error) {
+    console.error('Error:', error);
+    showError('Failed to analyze image. Please try again.');
+  } finally {
+    analyzeBtn.classList.remove('loading');
+    analyzeBtn.innerHTML = 'Analyze Image';
+    analyzeBtn.disabled = false;
+  }
+}
+
+function showError(message) {
+  errorText.textContent = message;
+  errorMessage.classList.add('active');
+}
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const caption = document.getElementById('captionText').textContent;
+  try {
+    await navigator.clipboard.writeText(caption);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy Caption'; }, 2000);
+  } catch (err) {
+    console.error('Failed to copy:', err);
+  }
+});
+</script>
+
+</body>
+</html>
