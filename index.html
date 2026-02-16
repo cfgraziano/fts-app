@@ -311,7 +311,7 @@
 
   <div class="upload-card">
     <h1 class="upload-title">Analyze Your Post</h1>
-    <p class="upload-subtitle">Upload an image and get instant caption suggestions, brand voice feedback, visual analysis, and engagement tactics.</p>
+    <p class="upload-subtitle">Upload an image and get instant caption suggestions, brand voice feedback, visual analysis, and engagement tactics. Images are automatically compressed to save you money!</p>
 
     <div class="upload-zone" id="uploadZone">
       <div class="upload-icon">📸</div>
@@ -425,15 +425,49 @@ function handleFile(file) {
   const reader = new FileReader();
   
   reader.onload = (e) => {
-    imagePreview.src = e.target.result;
-    imageBase64 = e.target.result.split(',')[1];
-    previewArea.classList.add('active');
-    analyzeBtn.disabled = false;
-    errorMessage.classList.remove('active');
-    resultsCard.classList.remove('active');
+    // Compress the image before displaying
+    compressImage(e.target.result, (compressedDataUrl) => {
+      imagePreview.src = compressedDataUrl;
+      imageBase64 = compressedDataUrl.split(',')[1];
+      previewArea.classList.add('active');
+      analyzeBtn.disabled = false;
+      errorMessage.classList.remove('active');
+      resultsCard.classList.remove('active');
+    });
   };
   
   reader.readAsDataURL(file);
+}
+
+function compressImage(dataUrl, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    let width = img.width;
+    let height = img.height;
+    
+    // Target max dimensions (maintains aspect ratio)
+    const maxDimension = 1200;
+    
+    if (width > height && width > maxDimension) {
+      height = (height * maxDimension) / width;
+      width = maxDimension;
+    } else if (height > maxDimension) {
+      width = (width * maxDimension) / height;
+      height = maxDimension;
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    // Compress to JPEG at 85% quality
+    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    callback(compressedDataUrl);
+  };
+  img.src = dataUrl;
 }
 
 removeBtn.addEventListener('click', () => {
