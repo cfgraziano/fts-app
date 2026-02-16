@@ -463,9 +463,19 @@ function compressImage(dataUrl, callback) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, width, height);
     
-    // Compress to JPEG at 85% quality
-    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    callback(compressedDataUrl);
+    // Compress to JPEG at 80% quality (more aggressive)
+    try {
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+      console.log('Compressed size:', Math.round(compressedDataUrl.length / 1024), 'KB');
+      callback(compressedDataUrl);
+    } catch (e) {
+      console.error('Compression failed, using original:', e);
+      callback(dataUrl);
+    }
+  };
+  img.onerror = () => {
+    console.error('Image load failed, using original');
+    callback(dataUrl);
   };
   img.src = dataUrl;
 }
