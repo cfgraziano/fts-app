@@ -104,6 +104,10 @@ Format your response with clear headers: CAPTION 1:, CAPTION 2:, CAPTION 3:, BRA
 
   } catch (error) {
     console.error('API Error:', error);
-    return res.status(500).json({ error: 'Failed to analyze image' });
+    console.error('Error details:', error.message, error.status);
+    return res.status(500).json({ 
+      error: 'Failed to analyze image',
+      details: error.message 
+    });
   }
 };
